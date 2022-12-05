@@ -173,7 +173,7 @@ public class Calculator {
                     break;
                 case "Pi":
                     // recognize pi variable and replace that token with it
-                    this.reverse_polish.add("3.141592653589793238");
+                    this.reverse_polish.add("3.14159");
                     break;
                 default: 
                     try
