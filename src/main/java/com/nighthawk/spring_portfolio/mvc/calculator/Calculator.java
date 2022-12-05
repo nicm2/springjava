@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+import java.lang.Math;
 
 /* In mathematics,
     an expression or mathematical expression is a finite combination of symbols that is well-formed
@@ -15,7 +16,7 @@ import java.util.Stack;
      */
 public class Calculator {
     // Key instance variables
-    private final String expression;
+    private String expression;
     private ArrayList<String> tokens;
     private ArrayList<String> reverse_polish;
     private Double result = 0.0;
@@ -24,6 +25,9 @@ public class Calculator {
     private final Map<String, Integer> OPERATORS = new HashMap<>();
     {
         // Map<"token", precedence>
+        OPERATORS.put("RT", 1);
+        OPERATORS.put("POW", 2);
+        OPERATORS.put("^", 2);
         OPERATORS.put("*", 3);
         OPERATORS.put("/", 3);
         OPERATORS.put("%", 3);
@@ -45,6 +49,9 @@ public class Calculator {
         // original input
         this.expression = expression;
 
+        this.parenthesesCheck();
+
+
         // parse expression into terms
         this.termTokenizer();
 
@@ -53,6 +60,22 @@ public class Calculator {
 
         // calculate reverse polish notation
         this.rpnToResult();
+    }
+
+    private void parenthesesCheck() {
+        int leftParentheses = 0;
+        int rightParentheses = 0;
+        for (int i = 0; i < this.expression.length(); i++) {
+            if (this.expression.charAt(i) == '(') {
+                leftParentheses++;
+            } else if (this.expression.charAt(i) == ')') {
+                rightParentheses++;
+            }
+        }
+
+        if (leftParentheses != rightParentheses) {
+            throw new RuntimeException("Parentheses imbalance, check your parentheses.");
+        }
     }
 
     // Test if token is an operator
@@ -127,11 +150,13 @@ public class Calculator {
                     }
                     tokenStack.pop();
                     break;
+                case "RT":
                 case "+":
                 case "-":
                 case "*":
                 case "/":
                 case "%":
+                case "POW":
                     // While stack
                     // not empty AND stack top element
                     // and is an operator
@@ -146,7 +171,22 @@ public class Calculator {
                     // Push the new operator on the stack
                     tokenStack.push(token);
                     break;
-                default:    // Default should be a number, there could be test here
+                case "Pi":
+                    // recognize pi variable and replace that token with it
+                    this.reverse_polish.add("3.141592653589793238");
+                    break;
+                default: 
+                    try
+                    {
+                        Double.parseDouble(token);
+                    }
+                    catch(NumberFormatException e)
+                    {
+                        // Resolve variable to 0 in order for the rest of the function to successfully run.
+                        this.reverse_polish.add("0");
+                        this.expression = "Error with parsing your expression \'" + this.expression + "\'. Please enter valid numbers, operators, or variables and try again.";
+                        break;
+                    }
                     this.reverse_polish.add(token);
             }
         }
@@ -169,10 +209,42 @@ public class Calculator {
             // If the token is an operator, calculate
             if (isOperator(token))
             {
-                // Pop the two top entries
+                              
+                // Pop the top two entries
+                double a = calcStack.pop();
+                double b = calcStack.pop();
 
                 // Calculate intermediate results
-                result = 0.0;
+                switch (token) {
+                    // b goes first, as it is popped second and must be on the left to make the equation work
+                    case "RT":
+                        // rt is the only exception as the first value is the value of the root being done to the second value
+                        result = Math.pow(a, (1/b));
+                        break;
+                    case "+":
+                        result = b + a;
+                        break;
+                    case "-":
+                        result = b - a;
+                        break;
+                    case "*":
+                        result = b * a;
+                        break; 
+                    case "/":
+                        result = b / a;
+                        break;
+                    case "%":
+                        result = b % a;
+                        break;
+                    case "POW":
+                        result = Math.pow(b,a);
+                        break;
+                    default:
+                        break;
+                }
+
+                // Pop the two top entries
+
 
                 // Push intermediate result back onto the stack
                 calcStack.push( result );
@@ -187,39 +259,59 @@ public class Calculator {
         this.result = calcStack.pop();
     }
 
-    // Print the expression, terms, and result
-    public String toString() {
+    public String calcToString(boolean x) {
+        if (x) {
+        System.out.println("--------");
+        System.out.println("Result: " + this.expression + " = " + this.result);
+        System.out.println("Tokens: " + this.tokens + " , RPN: " + this.reverse_polish);
+        }
+
+        String output = this.expression + " = " + this.result;
+        return output;
+    }
+
+    public String jsonify() {
+        String json = "{ \"Expression\": \"" + this.expression + "\", \"Tokens\": \"" + this.tokens + "\", \"RPN\": \"" + this.reverse_polish + "\", \"Result\": " + this.result + " }";
+        return json;
+    }
+
+     // Print the expression, terms, and result
+     public String toString() {
         return ("Original expression: " + this.expression + "\n" +
                 "Tokenized expression: " + this.tokens.toString() + "\n" +
                 "Reverse Polish Notation: " +this.reverse_polish.toString() + "\n" +
                 "Final result: " + String.format("%.2f", this.result));
     }
-
+    
     // Tester method
     public static void main(String[] args) {
-        // Random set of test cases
-        Calculator simpleMath = new Calculator("100 + 200  * 3");
-        System.out.println("Simple Math\n" + simpleMath);
+    
+        Calculator simpleMath = new Calculator("10 + 30  * 2");
+        System.out.println("Basic\n" + simpleMath);
 
         System.out.println();
 
-        Calculator parenthesisMath = new Calculator("(100 + 200)  * 3");
-        System.out.println("Parenthesis Math\n" + parenthesisMath);
+        Calculator parenthesisMath = new Calculator("(20 + 10)  * 2");
+        System.out.println("Parenthesis\n" + parenthesisMath);
 
         System.out.println();
 
-        Calculator decimalMath = new Calculator("100.2 - 99.3");
-        System.out.println("Decimal Math\n" + decimalMath);
+        Calculator decimalMath = new Calculator("12.3 - 2.4");
+        System.out.println("Decimal\n" + decimalMath);
 
         System.out.println();
 
-        Calculator moduloMath = new Calculator("300 % 200");
-        System.out.println("Modulo Math\n" + moduloMath);
+        Calculator moduloMath = new Calculator("45 % 2");
+        System.out.println("Modulo\n" + moduloMath);
 
         System.out.println();
 
-        Calculator divisionMath = new Calculator("300/200");
-        System.out.println("Division Math\n" + divisionMath);
+        Calculator divisionMath = new Calculator("20/5");
+        System.out.println("Division\n" + divisionMath);
 
-    }
+        System.out.println();
+
+        Calculator powerMath = new Calculator("2 POW 3");
+        System.out.println("Power\n" + powerMath);
+        }
 }
