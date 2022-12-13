@@ -2,8 +2,10 @@ package com.nighthawk.spring_portfolio.mvc.lightboard;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
+import lombok.Data;
+
+@Data  // Annotations to simplify writing code (ie constructors, setters)
 public class Light {
     boolean on;
     short red;
@@ -43,12 +45,6 @@ public class Light {
     public Light() {
         int maxColor = 255;
         int effect = 9;
-
-        //Randomly on or off
-        Random a = new Random();
-        this.on = a.nextBoolean();
-
-        // Randomly assign colors and effects
         this.red = (short) (Math.random()*(maxColor+1));
         this.green = (short) (Math.random()*(maxColor+1));
         this.blue = (short) (Math.random()*(maxColor+1));
@@ -67,10 +63,10 @@ public class Light {
          );
     }
 
-    public void setRGB(short r, short g, short b) {
-        this.red = r;
+    public void setRGB(short r, short b, short g){
         this.green = g;
         this.blue = b;
+        this.red = r;
     }
 
     /* toString output as key/values */
@@ -84,28 +80,28 @@ public class Light {
             "}" );
     }
 
-    public boolean isOn() {
+    public boolean isOn(){
         return this.on;
     }
 
-    public void setOn(boolean on) {
+    public void setOn(boolean on){
         this.on = on;
-    }
-
-    public short getRed() {
-        return red;
-    }
-
-    public short getGreen() {
-        return green;
-    }
-
-    public short getBlue() {
-        return blue;
     }
 
     public short getEffect() {
         return effect;
+    }
+
+    public short getRed(){
+        return red;
+    }
+
+    public short getGreen(){
+        return green;
+    }
+
+    public short getBlue(){
+        return blue;
     }
 
     static public void main(String[] args) {
@@ -113,8 +109,4 @@ public class Light {
         Light light = new Light();
         System.out.println(light);  // use toString() method
     }
-    
-
 }
-
-// Light.main(null);
